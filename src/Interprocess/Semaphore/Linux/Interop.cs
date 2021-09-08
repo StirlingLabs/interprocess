@@ -29,9 +29,15 @@ namespace Cloudtoid.Interprocess.Semaphore.Linux
 
         private static unsafe int errno => Marshal.GetLastWin32Error();
 
+#if NET5_0_OR_GREATER
+        [SuppressGCTransition]
+#endif
         [DllImport(Lib, SetLastError = true)]
         private static extern IntPtr sem_open([MarshalAs(UnmanagedType.LPUTF8Str)] string name, int oflag, uint mode, uint value);
 
+#if NET5_0_OR_GREATER
+        [SuppressGCTransition]
+#endif
         [DllImport(Lib, SetLastError = true)]
         private static extern int sem_post(IntPtr handle);
 
@@ -41,9 +47,15 @@ namespace Cloudtoid.Interprocess.Semaphore.Linux
         [DllImport(Lib, SetLastError = true)]
         private static extern int sem_timedwait(IntPtr handle, ref PosixTimespec abs_timeout);
 
+#if NET5_0_OR_GREATER
+        [SuppressGCTransition]
+#endif
         [DllImport(Lib, SetLastError = true)]
         private static extern int sem_unlink([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
 
+#if NET5_0_OR_GREATER
+        [SuppressGCTransition]
+#endif
         [DllImport(Lib, SetLastError = true)]
         private static extern int sem_close(IntPtr handle);
 

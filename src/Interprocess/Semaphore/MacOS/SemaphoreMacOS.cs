@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Cloudtoid.Interprocess.Semaphore.MacOS
 {
@@ -33,9 +35,13 @@ namespace Cloudtoid.Interprocess.Semaphore.MacOS
                 Interop.Unlink(name);
         }
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Release()
             => Interop.Release(handle);
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Wait(int millisecondsTimeout)
             => Interop.Wait(handle, millisecondsTimeout);
     }
