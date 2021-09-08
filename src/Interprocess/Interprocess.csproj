@@ -23,9 +23,16 @@
     <Version>1.0.156</Version>
     <AssemblyVersion>1.0.156.1</AssemblyVersion>
     <FileVersion>1.0.156.1</FileVersion>
+    <TargetFrameworks>$(TargetFrameworks);netstandard2.1;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="System.Threading.AccessControl" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
   </ItemGroup>
 
 </Project>

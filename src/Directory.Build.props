@@ -22,7 +22,6 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Cloudtoid.Framework" Version="$(CloudtoidFrameworkVersion)" />
   </ItemGroup>
 
 </Project>

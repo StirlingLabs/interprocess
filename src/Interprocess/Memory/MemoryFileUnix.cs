@@ -105,8 +105,14 @@ namespace Cloudtoid.Interprocess.Memory.Unix
             if (IsFileInUse(file))
                 return;
 
-            if (!PathUtil.TryDeleteFile(file))
-                logger.LogError("Failed to delete queue's shared memory backing file even though it is not in use by any process.");
+            try
+            {
+                File.Delete(file);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to delete queue's shared memory backing file even though it is not in use by any process");
+            }
         }
 
         private static bool IsFileInUse(string file)

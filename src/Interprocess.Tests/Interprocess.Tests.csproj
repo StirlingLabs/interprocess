@@ -5,6 +5,7 @@
     <RootNamespace>Cloudtoid.Interprocess.Tests</RootNamespace>
     <AssemblyName>Cloudtoid.Interprocess.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
+    <TargetFrameworks>$(TargetFrameworks);netstandard2.1;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>

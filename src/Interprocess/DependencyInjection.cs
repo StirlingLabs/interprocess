@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using static Cloudtoid.Contract;
+﻿using System;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Cloudtoid.Interprocess
 {
@@ -12,7 +13,7 @@ namespace Cloudtoid.Interprocess
         /// </summary>
         public static IServiceCollection AddInterprocessQueue(this IServiceCollection services)
         {
-            CheckValue(services, nameof(services));
+            if (services is null) throw new ArgumentNullException(nameof(services));
 
             Util.Ensure64Bit();
             services.TryAddSingleton<IQueueFactory, QueueFactory>();

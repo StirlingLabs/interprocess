@@ -36,7 +36,11 @@ namespace Cloudtoid.Interprocess.Semaphore.MacOS
         [SuppressGCTransition]
 #endif
         [DllImport(Lib, SetLastError = true)]
+#if NETSTANDARD2_0
+        private static extern IntPtr sem_open([MarshalAs(UnmanagedType.LPStr)] string name, int oflag, uint mode, uint value);
+#else
         private static extern IntPtr sem_open([MarshalAs(UnmanagedType.LPUTF8Str)] string name, int oflag, uint mode, uint value);
+#endif
 
 #if NET5_0_OR_GREATER
         [SuppressGCTransition]
@@ -54,7 +58,11 @@ namespace Cloudtoid.Interprocess.Semaphore.MacOS
         [SuppressGCTransition]
 #endif
         [DllImport(Lib, SetLastError = true)]
+#if NETSTANDARD2_0
+        private static extern int sem_unlink([MarshalAs(UnmanagedType.LPStr)] string name);
+#else
         private static extern int sem_unlink([MarshalAs(UnmanagedType.LPUTF8Str)] string name);
+#endif
 
 #if NET5_0_OR_GREATER
         [SuppressGCTransition]

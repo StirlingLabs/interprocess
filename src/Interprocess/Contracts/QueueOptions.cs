@@ -1,4 +1,5 @@
-﻿using static Cloudtoid.Contract;
+﻿using System;
+
 using SysPath = System.IO.Path;
 
 namespace Cloudtoid.Interprocess
@@ -23,11 +24,13 @@ namespace Cloudtoid.Interprocess
         /// <param name="bytesCapacity">The maximum capacity of the queue in bytes. This should be at least 16 bytes long and in the multiples of 8</param>
         public unsafe QueueOptions(string queueName, string path, long bytesCapacity)
         {
-            QueueName = CheckNonEmpty(queueName, nameof(queueName));
-            Path = CheckValue(path, nameof(path));
-
-            BytesCapacity = CheckGreaterThan(bytesCapacity, sizeof(QueueHeader), nameof(bytesCapacity));
-            CheckParam((bytesCapacity % 8) == 0, nameof(queueName), $"{nameof(bytesCapacity)} should be a multiple of 8 (8 bytes = 64 bits).");
+            if (string.IsNullOrEmpty(queueName)) throw new ArgumentNullException(nameof(queueName));
+            if (path is null) throw new ArgumentNullException(nameof(path));
+            if (bytesCapacity <= sizeof(QueueHeader)) throw new ArgumentOutOfRangeException(nameof(bytesCapacity), "Should be greater than {sizeof(QueueHeader)}.");
+            if ((bytesCapacity % 8) != 0) throw new ArgumentOutOfRangeException(nameof(bytesCapacity), $"{nameof(bytesCapacity)} should be a multiple of 8 (8 bytes = 64 bits).");
+            QueueName = queueName;
+            Path = path;
+            BytesCapacity = bytesCapacity;
         }
 
         /// <summary>
