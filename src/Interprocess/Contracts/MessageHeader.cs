@@ -10,6 +10,7 @@ namespace Cloudtoid.Interprocess
     {
         internal const int LockedToBeConsumedState = 1;
         internal const int ReadyToBeConsumedState = 2;
+        internal const int AbortedState = 3;
 
         [FieldOffset(0)]
         internal int State;

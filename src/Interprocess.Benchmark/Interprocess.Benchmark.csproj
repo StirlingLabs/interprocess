@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Interprocess\Interprocess.csproj" />
+  </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <RootNamespace>Cloudtoid.Interprocess.Benchmark</RootNamespace>
+    <NoWarn>SA1200</NoWarn>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Interprocess\Interprocess.csproj" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
   </ItemGroup>
 
 </Project>

@@ -5,13 +5,13 @@ using BenchmarkDotNet.Jobs;
 
 namespace Cloudtoid.Interprocess.Benchmark
 {
-    [SimpleJob(RuntimeMoniker.NetCoreApp31)]
     [SimpleJob(RuntimeMoniker.Net50)]
     [MemoryDiagnoser]
     public class QueueBenchmark
     {
         private static readonly byte[] Message = new byte[] { 100, 110, 120 };
         private static readonly Memory<byte> MessageBuffer = new byte[Message.Length];
+        private readonly string queueName = InterprocessSemaphore.GenerateName();
 #pragma warning disable CS8618
         private IPublisher publisher;
         private ISubscriber subscriber;
@@ -21,8 +21,8 @@ namespace Cloudtoid.Interprocess.Benchmark
         public void Setup()
         {
             var queueFactory = new QueueFactory();
-            publisher = queueFactory.CreatePublisher(new QueueOptions("qn", Path.GetTempPath(), 128));
-            subscriber = queueFactory.CreateSubscriber(new QueueOptions("qn", Path.GetTempPath(), 128));
+            publisher = queueFactory.CreatePublisher(new QueueOptions(queueName, Path.GetTempPath(), 128));
+            subscriber = queueFactory.CreateSubscriber(new QueueOptions(queueName, Path.GetTempPath(), 128));
         }
 
         [GlobalCleanup]

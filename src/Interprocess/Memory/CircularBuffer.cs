@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Cloudtoid.Interprocess
 {
-    internal unsafe sealed class CircularBuffer
+    internal sealed unsafe class CircularBuffer
     {
         private readonly byte* buffer;
 
@@ -52,7 +52,7 @@ namespace Cloudtoid.Interprocess
                     Buffer.MemoryCopy(buffer, resultBuffeerPtr + rightLength, leftLength, leftLength);
             }
 
-            return result.Slice(0, (int)length);
+            return result.Slice(0, checked((int)length));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -102,5 +102,21 @@ namespace Cloudtoid.Interprocess
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AdjustedOffset(ref long offset)
             => offset %= Capacity;
+
+        internal WrappedByteSpan GetWrappedByteSpan(long offset, long length)
+        {
+            var capacity = Capacity;
+            if (length > capacity)
+                throw new ArgumentOutOfRangeException(nameof(length));
+
+            AdjustedOffset(ref offset);
+
+            var maxRightLength = capacity - offset;
+            if (length <= maxRightLength)
+                return new(new(buffer + offset, checked((int)length)));
+
+            var leftLength = length - maxRightLength;
+            return new(new(buffer + offset, checked((int)maxRightLength)), new(buffer, checked((int)leftLength)));
+        }
     }
 }

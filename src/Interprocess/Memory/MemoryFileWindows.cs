@@ -1,24 +1,34 @@
-﻿using System.IO;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 
 namespace Cloudtoid.Interprocess.Memory.Windows
 {
+    [SuppressMessage("Interoperability", "CA1416", Justification = "Used only on Windows platforms")]
     internal sealed class MemoryFileWindows : IMemoryFile
     {
-        private const string MapNamePrefix = "CT_IP_";
-
         internal MemoryFileWindows(QueueOptions options)
         {
-#if NET5_0
-            if (!System.OperatingSystem.IsWindows())
-                throw new System.PlatformNotSupportedException();
-#endif
-            MappedFile = MemoryMappedFile.CreateOrOpen(
-                mapName: MapNamePrefix + options.QueueName,
-                options.BytesCapacity,
-                MemoryMappedFileAccess.ReadWrite,
-                MemoryMappedFileOptions.None,
-                HandleInheritability.None);
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                throw new PlatformNotSupportedException();
+
+            var name = options.QueueName + "_File";
+
+            try
+            {
+                MappedFile = MemoryMappedFile.OpenExisting(name);
+            }
+            catch (FileNotFoundException)
+            {
+                MappedFile = MemoryMappedFile.CreateNew(
+                    name,
+                    options.BytesCapacity,
+                    MemoryMappedFileAccess.ReadWrite,
+                    MemoryMappedFileOptions.None,
+                    HandleInheritability.None);
+            }
         }
 
         public MemoryMappedFile MappedFile { get; }

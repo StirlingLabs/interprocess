@@ -2,7 +2,7 @@
 
 namespace Cloudtoid.Interprocess
 {
-    internal interface IInterprocessSemaphoreReleaser : IDisposable
+    public interface IInterprocessSemaphoreReleaser
     {
         void Release();
     }

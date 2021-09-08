@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cloudtoid.Interprocess.Semaphore.Posix
+namespace Cloudtoid.Interprocess.Posix
 {
     internal class PosixSempahoreException
         : Exception

@@ -4,6 +4,7 @@ using Xunit;
 
 namespace Cloudtoid.Interprocess.Tests
 {
+    [Collection("SharedNamespaceTests")]
     public unsafe class CircularBufferTests
     {
         private static readonly byte[] ByteArray1 = new byte[] { 100, };

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Globalization;
 using System.IO;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine.ClientProtocol;
 
 namespace Cloudtoid.Interprocess.Tests
 {
@@ -11,7 +13,7 @@ namespace Cloudtoid.Interprocess.Tests
         {
             while (true)
             {
-                var folder = (DateTime.UtcNow.Ticks % 0xFFFFF).ToStringInvariant("X5");
+                var folder = (DateTime.UtcNow.Ticks % 0xFFFFF).ToString("X5", CultureInfo.InvariantCulture);
                 Path = System.IO.Path.Combine(Root, folder);
                 if (!Directory.Exists(Path))
                 {
@@ -25,14 +27,14 @@ namespace Cloudtoid.Interprocess.Tests
 
         public void Dispose()
         {
-            foreach (var file in Directory.EnumerateFiles(Path))
-                PathUtil.TryDeleteFile(file);
-
             try
             {
-                Directory.Delete(Path);
+                Directory.Delete(Path, true);
             }
-            catch { }
+            catch
+            {
+                // ok
+            }
         }
     }
 }

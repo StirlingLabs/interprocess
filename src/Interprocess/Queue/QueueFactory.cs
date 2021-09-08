@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using static Cloudtoid.Contract;
 
 namespace Cloudtoid.Interprocess
 {
@@ -16,19 +16,22 @@ namespace Cloudtoid.Interprocess
         public QueueFactory(ILoggerFactory loggerFactory)
         {
             Util.Ensure64Bit();
-            this.loggerFactory = CheckValue(loggerFactory, nameof(loggerFactory));
+            this.loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
 
         /// <summary>
         /// Creates a queue message publisher.
         /// </summary>
         public IPublisher CreatePublisher(QueueOptions options)
-            => new Publisher(CheckValue(options, nameof(options)), loggerFactory);
+            => new Publisher(options ?? throw new ArgumentNullException(nameof(options)), loggerFactory);
 
         /// <summary>
         /// Creates a queue message subscriber.
         /// </summary>
         public ISubscriber CreateSubscriber(QueueOptions options)
-            => new Subscriber(CheckValue(options, nameof(options)), loggerFactory);
+            => new Subscriber(options ?? throw new ArgumentNullException(nameof(options)), loggerFactory);
+
+        public IChannel CreateChannel(QueueOptions options, bool asClient = false)
+            => new Channel(options ?? throw new ArgumentNullException(nameof(options)), this, asClient);
     }
 }

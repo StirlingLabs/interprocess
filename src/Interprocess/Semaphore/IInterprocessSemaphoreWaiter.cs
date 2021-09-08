@@ -2,7 +2,7 @@
 
 namespace Cloudtoid.Interprocess
 {
-    internal interface IInterprocessSemaphoreWaiter : IDisposable
+    public interface IInterprocessSemaphoreWaiter
     {
         bool Wait(int millisecondsTimeout);
     }
