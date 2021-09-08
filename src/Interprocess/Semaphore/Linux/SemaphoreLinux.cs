@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace Cloudtoid.Interprocess.Semaphore.Linux
 {
-    internal class SemaphoreLinux : IInterprocessSemaphoreWaiter, IInterprocessSemaphoreReleaser
+    internal class SemaphoreLinux : IInterprocessSemaphore
     {
         private const string HandleNamePrefix = "/ct.ip.";
         private readonly string name;

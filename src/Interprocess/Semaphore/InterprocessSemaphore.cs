@@ -9,9 +9,9 @@ namespace Cloudtoid.Interprocess
     /// This class opens or creates platform agnostic named semaphore. Named
     /// semaphores are synchronization constructs accessible across processes.
     /// </summary>
-    internal static class InterprocessSemaphore
+    public static class InterprocessSemaphore
     {
-        internal static IInterprocessSemaphoreWaiter CreateWaiter(string name)
+        public static IInterprocessSemaphore Create(string name)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return new SemaphoreWindows(name);
@@ -22,15 +22,10 @@ namespace Cloudtoid.Interprocess
             return new SemaphoreLinux(name);
         }
 
-        internal static IInterprocessSemaphoreReleaser CreateReleaser(string name)
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return new SemaphoreWindows(name);
+        public static IInterprocessSemaphoreWaiter CreateWaiter(string name)
+            => Create(name);
 
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                return new SemaphoreMacOS(name);
-
-            return new SemaphoreLinux(name);
-        }
+        public static IInterprocessSemaphoreReleaser CreateReleaser(string name)
+            => Create(name);
     }
 }

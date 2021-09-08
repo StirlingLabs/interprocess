@@ -12,7 +12,7 @@ using SysSemaphore = System.Threading.Semaphore;
 namespace Cloudtoid.Interprocess.Semaphore.Windows
 {
     // just a wrapper over the Windows named semaphore
-    internal sealed class SemaphoreWindows : IInterprocessSemaphoreWaiter, IInterprocessSemaphoreReleaser
+    internal sealed class SemaphoreWindows : IInterprocessSemaphore
     {
         private const string HandleNamePrefix = @"Global\CT.IP.";
         private readonly SysSemaphore handle;
