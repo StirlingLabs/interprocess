@@ -14,7 +14,7 @@ namespace Cloudtoid.Interprocess.Semaphore.Windows
     // just a wrapper over the Windows named semaphore
     internal sealed class SemaphoreWindows : IInterprocessSemaphore
     {
-        private const string HandleNamePrefix = @"Global\CT.IP.";
+        private const string HandleNamePrefix = @"Global\";
         private readonly SysSemaphore handle;
 
         [SuppressMessage("Interoperability", "CA1416", Justification = "Used only on Windows platforms")]
