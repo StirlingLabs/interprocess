@@ -6,23 +6,23 @@
     <AssemblyName>Cloudtoid.Interprocess</AssemblyName>
   </PropertyGroup>
 
+  <ImportGroup>
+    <Import Project="../Version.proj" />
+  </ImportGroup>
   <!-- NuGet Packaging -->
   <PropertyGroup>
     <PackageId>Cloudtoid.Interprocess</PackageId>
     <Title>Cloudtoid.Interprocess</Title>
-    <Authors>pedram@rezaei.us</Authors>
-    <Company>cloudtoid</Company>
+
     <PackageDescription>A cross-platform shared memory queue for fast interprocess messaging.</PackageDescription>
     <Copyright>Copyright (c) Cloudtoid</Copyright>
-    <RepositoryUrl>https://github.com/cloudtoid/interprocess/</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/cloudtoid/interprocess/blob/main/README.md</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/StirlingLabs/interprocess/</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/StirlingLabs/interprocess/blob/main/README.md</PackageProjectUrl>
     <IsPackable>true</IsPackable>
     <PackageTags>interprocess;interprocess-communication;ipc;shared-memory-communication;shared-memory-queue;shared-memory;memory-mapped-file;queue;cross-process-communication;cross-process</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <VersionSuffix Condition=" '$(VersionSuffix)'=='' ">0</VersionSuffix>
-    <Version>1.0.156</Version>
-    <AssemblyVersion>1.0.156.1</AssemblyVersion>
-    <FileVersion>1.0.156.1</FileVersion>
+
+    <PackageOutputPath>../artifacts</PackageOutputPath>
     <TargetFrameworks>$(TargetFrameworks);netstandard2.1;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
