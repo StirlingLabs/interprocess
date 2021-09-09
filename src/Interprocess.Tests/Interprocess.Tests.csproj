@@ -5,16 +5,15 @@
     <RootNamespace>Cloudtoid.Interprocess.Tests</RootNamespace>
     <AssemblyName>Cloudtoid.Interprocess.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
-    <TargetFrameworks>$(TargetFrameworks);netstandard2.1;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.*" />
-    <PackageReference Include="FluentAssertions" Version="5.10.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="FluentAssertions" Version="5.10.3" />
     <PackageReference Include="NSubstitute" Version="4.2.*" />
-    <PackageReference Include="xunit" Version="2.4.*" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.*" />
-    <PackageReference Include="coverlet.collector" Version="3.0.*" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
+    <PackageReference Include="coverlet.collector" Version="3.0.0" />
   </ItemGroup>
 
   <ItemGroup>

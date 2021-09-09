@@ -11,9 +11,9 @@
 
   <!-- Versions -->
   <PropertyGroup>
-    <CloudtoidCodeAnalysisVersion>1.0.*</CloudtoidCodeAnalysisVersion>
-    <CloudtoidFrameworkVersion>1.0.*</CloudtoidFrameworkVersion>
-    <MicrosoftExtensionsVersion>5.0.*</MicrosoftExtensionsVersion>
+    <CloudtoidCodeAnalysisVersion>1.0.15</CloudtoidCodeAnalysisVersion>
+    <CloudtoidFrameworkVersion>1.0.15</CloudtoidFrameworkVersion>
+    <MicrosoftExtensionsVersion>5.0.0</MicrosoftExtensionsVersion>
   </PropertyGroup>
 
   <!-- Package dependencies -->
