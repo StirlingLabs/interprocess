@@ -20,8 +20,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Fetch tag git metadata
-        run: git fetch --force --update-shallow --depth 1 origin +refs/tags/*:refs/tags/* || echo no tags
+      # - name: Fetch tag git metadata
+      #   run: git fetch --force --update-shallow --depth 1 origin +refs/tags/*:refs/tags/* || echo no tags
       - uses: actions/setup-dotnet@v1.8.1
         with:
           dotnet-version: "3.1.x"
