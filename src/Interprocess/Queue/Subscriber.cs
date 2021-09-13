@@ -161,18 +161,7 @@ namespace Cloudtoid.Interprocess
 
                 if (actualState == MessageHeader.AbortedState)
                 {
-                    // recover from aborted state
-                    if (Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.LockedToBeConsumedState, MessageHeader.AbortedState) == MessageHeader.AbortedState)
-                    {
-                        var bodyLength = messageHeader->BodyLength;
-                        var bodyOffset = GetMessageBodyOffset(headOffset);
-                        Buffer.Clear(bodyOffset, bodyLength);
-                        Buffer.Write(default(MessageHeader), headOffset);
-                        var messageLength = GetMessageLength(bodyLength);
-                        var newHeadOffset = SafeIncrementMessageOffset(headOffset, messageLength);
-                        if (Interlocked.CompareExchange(ref header->HeadOffset, newHeadOffset, headOffset) != headOffset)
-                            throw new InvalidOperationException(SeriousBugMessage);
-                    }
+                    RecoverFromAbortedMessage(messageHeader, headOffset, header);
 
                     // try to read the next message instead
                     continue;
@@ -214,6 +203,87 @@ namespace Cloudtoid.Interprocess
             }
         }
 
+        private unsafe bool TryDequeueZeroCopyImpl<TState>(delegate* managed<TState, WrappedByteSpan, CancellationToken, bool> func, TState state, CancellationToken cancellation)
+        {
+            while (true)
+            {
+                cancellationSource.ThrowIfCancellationRequested(cancellation);
+
+                var header = Header;
+                var headOffset = header->HeadOffset;
+
+                if (headOffset == header->TailOffset)
+                    return false; // this is an empty queue
+
+                var messageHeader = (MessageHeader*)Buffer.GetPointer(headOffset);
+
+                // take a lock so no other thread can start processing this message
+                var actualState = Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.LockedToBeConsumedState, MessageHeader.ReadyToBeConsumedState);
+
+                if (actualState == MessageHeader.AbortedState)
+                {
+                    RecoverFromAbortedMessage(messageHeader, headOffset, header);
+
+                    // try to read the next message instead
+                    continue;
+                }
+
+                // braces here for variable scope
+                {
+                    if (actualState != MessageHeader.ReadyToBeConsumedState)
+                        return false; // some other subscriber got to this message before us
+
+                    // was the header advanced already by another subscriber?
+                    if (header->HeadOffset != headOffset)
+                    {
+                        // revert the lock
+                        Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.ReadyToBeConsumedState, MessageHeader.LockedToBeConsumedState);
+
+                        return false;
+                    }
+
+                    // read the message body from the queue buffer
+                    var bodyLength = messageHeader->BodyLength;
+                    var bodyOffset = GetMessageBodyOffset(headOffset);
+
+                    var bugged = false;
+                    var success = false;
+                    try
+                    {
+                        var buffer = Buffer.GetWrappedByteSpan(bodyOffset, bodyLength);
+                        success = func(state, buffer, cancellation);
+                    }
+                    finally
+                    {
+                        if (!Volatile.Read(ref success))
+                        {
+                            // revert the lock
+                            Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.ReadyToBeConsumedState, MessageHeader.LockedToBeConsumedState);
+                        }
+                        else
+                        {
+                            // zero out the message body first
+                            Buffer.Clear(bodyOffset, bodyLength);
+
+                            // zero out the message header
+                            Buffer.Write(default(MessageHeader), headOffset);
+
+                            // updating the queue header to point the head of the queue to the next available message
+                            var messageLength = GetMessageLength(bodyLength);
+                            var newHeadOffset = SafeIncrementMessageOffset(headOffset, messageLength);
+
+                            bugged = Interlocked.CompareExchange(ref header->HeadOffset, newHeadOffset, headOffset) != headOffset;
+                        }
+                    }
+
+                    if (bugged)
+                        throw new InvalidOperationException(SeriousBugMessage);
+
+                    return success;
+                }
+            }
+        }
+
         private unsafe bool TryDequeueZeroCopyImpl(DequeueZeroCopyFunc func, CancellationToken cancellation)
         {
             while (true)
@@ -233,18 +303,7 @@ namespace Cloudtoid.Interprocess
 
                 if (actualState == MessageHeader.AbortedState)
                 {
-                    // recover from aborted state
-                    if (Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.LockedToBeConsumedState, MessageHeader.AbortedState) == MessageHeader.AbortedState)
-                    {
-                        var bodyLength = messageHeader->BodyLength;
-                        var bodyOffset = GetMessageBodyOffset(headOffset);
-                        Buffer.Clear(bodyOffset, bodyLength);
-                        Buffer.Write(default(MessageHeader), headOffset);
-                        var messageLength = GetMessageLength(bodyLength);
-                        var newHeadOffset = SafeIncrementMessageOffset(headOffset, messageLength);
-                        if (Interlocked.CompareExchange(ref header->HeadOffset, newHeadOffset, headOffset) != headOffset)
-                            throw new InvalidOperationException(SeriousBugMessage);
-                    }
+                    RecoverFromAbortedMessage(messageHeader, headOffset, header);
 
                     // try to read the next message instead
                     continue;
@@ -304,6 +363,131 @@ namespace Cloudtoid.Interprocess
                     return success;
                 }
             }
+        }
+
+        public unsafe void DequeueZeroCopy<TState>(delegate*<TState, WrappedByteSpan, CancellationToken, bool> func, TState state, CancellationToken cancellation)
+        {
+            // do NOT reorder the cancellation and the AddCount operation below. See Dispose for more information.
+            cancellationSource.ThrowIfCancellationRequested(cancellation);
+            countdownEvent.AddCount();
+
+            try
+            {
+                var i = -5;
+                while (true)
+                {
+                    if (TryDequeueZeroCopyImpl(func, state, cancellation))
+                        return;
+
+                    if (i > 10)
+                        signal.Wait(millisecondsTimeout: 10);
+                    else if (i++ > 0)
+                        signal.Wait(millisecondsTimeout: i);
+                    else
+                        Thread.Yield();
+                }
+            }
+            finally
+            {
+                countdownEvent.Signal();
+            }
+        }
+
+        public unsafe bool TryDequeueZeroCopy<TState>(delegate*<TState, WrappedByteSpan, CancellationToken, bool> func, TState state, CancellationToken cancellation)
+        {
+            while (true)
+            {
+                cancellationSource.ThrowIfCancellationRequested(cancellation);
+
+                var header = Header;
+                var headOffset = header->HeadOffset;
+
+                if (headOffset == header->TailOffset)
+                    return false; // this is an empty queue
+
+                var messageHeader = (MessageHeader*)Buffer.GetPointer(headOffset);
+
+                // take a lock so no other thread can start processing this message
+                var actualState = Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.LockedToBeConsumedState, MessageHeader.ReadyToBeConsumedState);
+
+                if (actualState == MessageHeader.AbortedState)
+                {
+                    RecoverFromAbortedMessage(messageHeader, headOffset, header);
+
+                    // try to read the next message instead
+                    continue;
+                }
+
+                // braces here for variable scope
+                {
+                    if (actualState != MessageHeader.ReadyToBeConsumedState)
+                        return false; // some other subscriber got to this message before us
+
+                    // was the header advanced already by another subscriber?
+                    if (header->HeadOffset != headOffset)
+                    {
+                        // revert the lock
+                        Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.ReadyToBeConsumedState, MessageHeader.LockedToBeConsumedState);
+
+                        return false;
+                    }
+
+                    // read the message body from the queue buffer
+                    var bodyLength = messageHeader->BodyLength;
+                    var bodyOffset = GetMessageBodyOffset(headOffset);
+
+                    var bugged = false;
+                    var success = false;
+                    try
+                    {
+                        var buffer = Buffer.GetWrappedByteSpan(bodyOffset, bodyLength);
+                        success = func(state, buffer, cancellation);
+                    }
+                    finally
+                    {
+                        if (!Volatile.Read(ref success))
+                        {
+                            // revert the lock
+                            Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.ReadyToBeConsumedState, MessageHeader.LockedToBeConsumedState);
+                        }
+                        else
+                        {
+                            // zero out the message body first
+                            Buffer.Clear(bodyOffset, bodyLength);
+
+                            // zero out the message header
+                            Buffer.Write(default(MessageHeader), headOffset);
+
+                            // updating the queue header to point the head of the queue to the next available message
+                            var messageLength = GetMessageLength(bodyLength);
+                            var newHeadOffset = SafeIncrementMessageOffset(headOffset, messageLength);
+
+                            bugged = Interlocked.CompareExchange(ref header->HeadOffset, newHeadOffset, headOffset) != headOffset;
+                        }
+                    }
+
+                    if (bugged)
+                        throw new InvalidOperationException(SeriousBugMessage);
+
+                    return success;
+                }
+            }
+        }
+
+        private unsafe void RecoverFromAbortedMessage(MessageHeader* messageHeader, long headOffset, QueueHeader* header)
+        {
+            if (Interlocked.CompareExchange(ref messageHeader->State, MessageHeader.LockedToBeConsumedState, MessageHeader.AbortedState)
+                != MessageHeader.AbortedState) return;
+
+            // recover from aborted state
+            var bodyLength = messageHeader->BodyLength;
+            var bodyOffset = GetMessageBodyOffset(headOffset);
+            Buffer.Clear(bodyOffset, bodyLength);
+            Buffer.Write(default(MessageHeader), headOffset);
+            var messageLength = GetMessageLength(bodyLength);
+            var newHeadOffset = SafeIncrementMessageOffset(headOffset, messageLength);
+            if (Interlocked.CompareExchange(ref header->HeadOffset, newHeadOffset, headOffset) != headOffset)
+                throw new InvalidOperationException(SeriousBugMessage);
         }
     }
 }

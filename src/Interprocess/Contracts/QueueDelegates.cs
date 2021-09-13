@@ -5,13 +5,13 @@ namespace Cloudtoid.Interprocess
 {
     /// <summary>
     /// This function is used to enqueue a message.
-    /// A negative value may be returned to abort the operation.
+    /// A negative value or zero may be returned to abort the operation.
     /// </summary>
     /// <param name="buffer">The writable buffer.</param>
     /// <param name="cancellation">A cancellation token.</param>
     /// <returns>
     /// The amount written into the buffer or a negative
-    /// value to abort the operation.
+    /// value or zero to abort the operation.
     /// </returns>
     /// <exception cref="Exception">
     /// If an exception is thrown, the operation is aborted.

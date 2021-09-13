@@ -120,6 +120,31 @@ namespace Cloudtoid.Interprocess.Tests
             });
 
         [Fact]
+        public void CanEnqueueAbortAndDequeue()
+            => BeforeAfterTest(() =>
+            {
+                using var p = CreatePublisher(64);
+                using var s = CreateSubscriber(64);
+
+                p.TryEnqueue(ByteArray3).Should().BeTrue();
+                var message = s.Dequeue(default);
+                message.ToArray().Should().BeEquivalentTo(ByteArray3);
+
+                p.TryEnqueueZeroCopy(ByteArray3.Length, (_, _) => -1, default).Should().BeFalse();
+                s.TryDequeue(default, out _).Should().BeFalse();
+                message.ToArray().Should().BeEquivalentTo(ByteArray3);
+
+                p.TryEnqueue(ByteArray2).Should().BeTrue();
+                message = s.Dequeue(default);
+                message.ToArray().Should().BeEquivalentTo(ByteArray2);
+
+                p.TryEnqueueZeroCopy(ByteArray3.Length, (_, _) => -1, default).Should().BeFalse();
+
+                p.TryEnqueue(ByteArray2).Should().BeTrue();
+                message = s.Dequeue(new byte[5], default);
+                message.ToArray().Should().BeEquivalentTo(ByteArray2);
+            });
+        [Fact]
         public void CanEnqueueAndDequeueChannel()
             => BeforeAfterTest(() =>
             {

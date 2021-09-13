@@ -86,6 +86,21 @@ namespace Cloudtoid.Interprocess
             CancellationToken cancellation);
 
         /// <summary>
+        /// Dequeues a message from the queue. If the queue is empty, it *waits* for the
+        /// arrival of a new message. This call is blocking until a message is received.
+        /// This method does not allocated memory and blocks until the
+        /// <paramref name="func"/> that is passed in completes.
+        /// </summary>
+        /// <param name="func">This function is called when the message is ready to be
+        /// read. It blocks normal operation of the queue while acting. See <see cref="DequeueZeroCopyFunc"/> for details.</param>
+        /// <param name="state">A user supplied state context to pass along to <paramref name="func"/>.</param>
+        /// <param name="cancellation">A cancellation token to observe while waiting for the task to complete.</param>
+        unsafe void DequeueZeroCopy<TState>(
+            delegate* managed<TState, WrappedByteSpan, CancellationToken, bool> func,
+            TState state,
+            CancellationToken cancellation);
+
+        /// <summary>
         /// Dequeues a message from the queue if the queue is not empty.
         /// If a message is not ready this is a non-blocking
         /// call and returns immediately.
@@ -102,6 +117,27 @@ namespace Cloudtoid.Interprocess
         /// </exception>
         bool TryDequeueZeroCopy(
             DequeueZeroCopyFunc func,
+            CancellationToken cancellation);
+
+        /// <summary>
+        /// Dequeues a message from the queue if the queue is not empty.
+        /// If a message is not ready this is a non-blocking
+        /// call and returns immediately.
+        /// This method does not allocated memory and blocks until the
+        /// <paramref name="func"/> that is passed in completes.
+        /// </summary>
+        /// <param name="func">This action is called when the message is ready to be
+        /// read. It blocks normal operation of the queue while acting. See <see cref="DequeueZeroCopyFunc"/> for details.</param>
+        /// <param name="state">A user supplied state context to pass along to <paramref name="func"/>.</param>
+        /// <param name="cancellation">A cancellation token to observe while waiting for the task to complete.</param>
+        /// <returns>True on success, otherwise false.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// This is unexpected and can be a serious bug. We take a lock on this message
+        /// prior to this point which should ensure that the HeadOffset is left unchanged.
+        /// </exception>
+        unsafe bool TryDequeueZeroCopy<TState>(
+            delegate* managed<TState, WrappedByteSpan, CancellationToken, bool> func,
+            TState state,
             CancellationToken cancellation);
     }
 }

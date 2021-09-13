@@ -97,20 +97,95 @@ namespace Cloudtoid.Interprocess
                 if (Interlocked.CompareExchange(ref *currentTailOffset, newTailOffset, tailOffset) != tailOffset)
                     continue;
 
+                var success = false;
                 long written = 0;
                 try
                 {
                     // write the message body
                     var buffer = Buffer.GetWrappedByteSpan(GetMessageBodyOffset(tailOffset), reserveBytes);
                     written = func(buffer, cancellation);
+                    success = written > 0;
+                }
+                catch
+                {
+                    success = false;
                 }
                 finally
                 {
                     try
                     {
                         // write the message header
-                        var headerState = Volatile.Read(ref written) > 0 ? MessageHeader.ReadyToBeConsumedState : MessageHeader.AbortedState;
-                        Buffer.Write(new MessageHeader(headerState, checked((int)written)), tailOffset);
+                        //success = Volatile.Read(ref written) > 0;
+                        var headerState = success
+                            ? MessageHeader.ReadyToBeConsumedState
+                            : MessageHeader.AbortedState;
+                        Buffer.Write(
+                            new MessageHeader(headerState, success
+                            ? checked((int)written)
+                            : checked((int)reserveBytes)),
+                            tailOffset);
+
+                        // signal the next receiver that there is a new message in the queue
+                        signal.Release();
+                    }
+                    catch (Exception ex)
+                    {
+                        Environment.FailFast(
+                            BadStateRequiresCrash,
+                            ex);
+                    }
+                }
+
+                return success; // Volatile.Read(ref success);
+            }
+        }
+
+        public unsafe bool TryEnqueueZeroCopy<TState>(long reserveBytes, delegate*<TState, WrappedByteSpan, CancellationToken, long> func, TState state, CancellationToken cancellation)
+        {
+            var bodyLength = reserveBytes;
+            while (true)
+            {
+                var header = *Header;
+                var tailOffset = header.TailOffset;
+
+                var messageLength = GetMessageLength(bodyLength);
+                var capacity = Buffer.Capacity - tailOffset + header.HeadOffset;
+                if (messageLength > capacity)
+                    return false;
+
+                var newTailOffset = SafeIncrementMessageOffset(tailOffset, messageLength);
+
+                // try to atomically update the tail-offset that is stored in the queue header
+                var currentTailOffset = (long*)Header + 1;
+                if (Interlocked.CompareExchange(ref *currentTailOffset, newTailOffset, tailOffset) != tailOffset)
+                    continue;
+
+                var success = false;
+                long written = 0;
+                try
+                {
+                    // write the message body
+                    var buffer = Buffer.GetWrappedByteSpan(GetMessageBodyOffset(tailOffset), reserveBytes);
+                    written = func(state, buffer, cancellation);
+                    success = written > 0;
+                }
+                catch
+                {
+                    success = false;
+                }
+                finally
+                {
+                    try
+                    {
+                        // write the message header
+                        var headerState = success
+                            ? MessageHeader.ReadyToBeConsumedState
+                            : MessageHeader.AbortedState;
+                        Buffer.Write(
+                            new MessageHeader(headerState, success
+                            ? checked((int)written)
+                            : checked((int)reserveBytes)),
+                            tailOffset);
 
                         // signal the next receiver that there is a new message in the queue
                         signal.Release();
