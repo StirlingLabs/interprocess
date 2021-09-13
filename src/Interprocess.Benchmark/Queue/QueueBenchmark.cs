@@ -14,7 +14,7 @@ namespace Cloudtoid.Interprocess.Benchmark
     public class QueueBenchmark
     {
         private const int QueueBytesCapacity = 33554432;
-        private const int QueueOpIterations = 256000;
+        private const int QueueOpIterations = 246723;
         private static readonly byte[] Message = new byte[128];
         private static readonly Memory<byte> MessageBuffer = new byte[Message.Length];
         private readonly string queueName = InterprocessSemaphore.GenerateName();
@@ -51,7 +51,8 @@ namespace Cloudtoid.Interprocess.Benchmark
         public void Enqueue() // this assumes the message has already been composed
         {
             for (var i = 0; i < QueueOpIterations; ++i)
-                publisher!.TryEnqueue(Message);
+                if (!publisher!.TryEnqueue(Message))
+                    throw new NotImplementedException(i.ToString());
         }
 
         // Expecting that there are NO managed heap allocations.
@@ -59,7 +60,8 @@ namespace Cloudtoid.Interprocess.Benchmark
         public void EnqueueZeroCopy() // this also assumes the message was already composed
         {
             for (var i = 0; i < QueueOpIterations; ++i)
-                publisher!.TryEnqueueZeroCopy(
+            {
+                if (!publisher!.TryEnqueueZeroCopy(
                     Message.Length,
                     (buffer, _) =>
                     {
@@ -71,7 +73,9 @@ namespace Cloudtoid.Interprocess.Benchmark
                         // ReSharper disable once ConvertToLambdaExpression
                         return buffer.Length;
                     },
-                    default);
+                    default))
+                    throw new NotImplementedException(i.ToString());
+            }
         }
 
         // Expecting that there are NO managed heap allocations.
@@ -82,7 +86,10 @@ namespace Cloudtoid.Interprocess.Benchmark
                 => buffer.Length;
 
             for (var i = 0; i < QueueOpIterations; ++i)
-                publisher!.TryEnqueueZeroCopy(Message.Length, &Func, (object?)null, default);
+            {
+                if (!publisher!.TryEnqueueZeroCopy(Message.Length, &Func, (object?)null, default))
+                    throw new NotImplementedException(i.ToString());
+            }
         }
 
         [Benchmark(Description = "Enqueue and dequeue messages (buffered allocating)", OperationsPerInvoke = QueueOpIterations)]
@@ -90,7 +97,8 @@ namespace Cloudtoid.Interprocess.Benchmark
         {
             for (var i = 0; i < QueueOpIterations; ++i)
             {
-                publisher.TryEnqueue(Message);
+                if (!publisher.TryEnqueue(Message))
+                    throw new NotImplementedException(i.ToString());
                 subscriber.Dequeue(default);
             }
         }
@@ -101,7 +109,8 @@ namespace Cloudtoid.Interprocess.Benchmark
         {
             for (var i = 0; i < QueueOpIterations; ++i)
             {
-                publisher.TryEnqueue(Message);
+                if (!publisher.TryEnqueue(Message))
+                    throw new NotImplementedException(i.ToString());
                 subscriber.Dequeue(MessageBuffer, default);
             }
         }
@@ -111,7 +120,7 @@ namespace Cloudtoid.Interprocess.Benchmark
         {
             for (var i = 0; i < QueueOpIterations; ++i)
             {
-                publisher!.TryEnqueueZeroCopy(
+                if (!publisher!.TryEnqueueZeroCopy(
                     Message.Length,
                     (buffer, _) =>
                     {
@@ -127,7 +136,8 @@ namespace Cloudtoid.Interprocess.Benchmark
 
                         return buffer.Length;
                     },
-                    default);
+                    default))
+                    throw new NotImplementedException(i.ToString());
 
                 subscriber.DequeueZeroCopy(
                     (buffer, _) =>
@@ -194,7 +204,8 @@ namespace Cloudtoid.Interprocess.Benchmark
 
             for (var i = 0; i < QueueOpIterations; ++i)
             {
-                publisher!.TryEnqueueZeroCopy(Message.Length, &EnqueueFunc, (object?)null, default);
+                if (!publisher!.TryEnqueueZeroCopy(Message.Length, &EnqueueFunc, (object?)null, default))
+                    throw new NotImplementedException(i.ToString());
                 subscriber.DequeueZeroCopy(&DequeueFunc, (object?)null, default);
             }
         }
