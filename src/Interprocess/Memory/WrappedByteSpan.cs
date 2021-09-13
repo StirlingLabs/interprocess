@@ -10,6 +10,8 @@ namespace Cloudtoid.Interprocess
         private readonly Span<byte> first;
         private readonly Span<byte> second;
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WrappedByteSpan(Span<byte> first, Span<byte> second = default)
         {
             this.first = first;
@@ -21,6 +23,7 @@ namespace Cloudtoid.Interprocess
         /// </summary>
         public int Length
         {
+            [DebuggerStepThrough]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => first.Length + second.Length;
         }
@@ -30,13 +33,24 @@ namespace Cloudtoid.Interprocess
         /// </summary>
         public bool IsEmpty
         {
+            [DebuggerStepThrough]
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => Length <= 0;
         }
 
-        public Span<byte> FirstPart => first;
+        public Span<byte> FirstPart
+        {
+            [DebuggerStepThrough]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => first;
+        }
 
-        public Span<byte> SecondPart => second;
+        public Span<byte> SecondPart
+        {
+            [DebuggerStepThrough]
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => second;
+        }
 
         public ref byte this[int offset]
         {
@@ -45,12 +59,13 @@ namespace Cloudtoid.Interprocess
             get
             {
                 var firstLength = first.Length;
-                if (offset > firstLength)
-                    return ref second[offset - firstLength];
-                return ref first[offset];
+                if (offset < firstLength)
+                    return ref first[offset];
+                return ref second[offset - firstLength];
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public WrappedByteSpan Slice(int offset)
         {
             var firstLength = first.Length;
@@ -63,6 +78,7 @@ namespace Cloudtoid.Interprocess
             throw new ArgumentOutOfRangeException(nameof(offset));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private WrappedByteSpan SetLength(int length)
         {
             if (length == 0)
@@ -76,6 +92,8 @@ namespace Cloudtoid.Interprocess
             throw new ArgumentOutOfRangeException(nameof(length));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+
         public WrappedByteSpan Slice(int offset, int length)
             => length == 0
                 ? default
@@ -83,6 +101,7 @@ namespace Cloudtoid.Interprocess
                     ? SetLength(length)
                     : Slice(offset).SetLength(length);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ReadOnlySpan<T> CreateReadOnlySpan<T>(in T item)
 #if NETSTANDARD2_0
         {
@@ -95,6 +114,7 @@ namespace Cloudtoid.Interprocess
             => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(item), 1);
 #endif
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Span<T> CreateSpan<T>(in T item)
 #if NETSTANDARD2_0
         {
@@ -129,12 +149,17 @@ namespace Cloudtoid.Interprocess
             }
         }
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryWrite<T>(in T item) where T : struct
             => TryWrite(CreateReadOnlySpan(item));
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryWrite<T>(ReadOnlySpan<T> items) where T : struct
             => TryWrite(AsBytes(items));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryWrite(ReadOnlySpan<byte> buffer)
         {
             var firstLength = first.Length;
@@ -150,18 +175,26 @@ namespace Cloudtoid.Interprocess
             return true;
         }
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write<T>(in T item) where T : struct
             => Write(CreateReadOnlySpan(item));
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write<T>(ReadOnlySpan<T> items) where T : struct
             => Write(MemoryMarshal.AsBytes(items));
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Write(ReadOnlySpan<byte> bytes)
         {
             if (!TryWrite(bytes))
                 throw new ArgumentException("Too long to fit in buffer.", nameof(bytes));
         }
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryRead<T>(out T item) where T : struct
         {
 #if NET5_0_OR_GREATER || NETSTANDARD
@@ -172,9 +205,12 @@ namespace Cloudtoid.Interprocess
             return TryRead(CreateSpan(item));
         }
 
+        [DebuggerStepThrough]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryRead<T>(Span<T> items) where T : struct
             => TryRead(AsBytes(items));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryRead(Span<byte> bytes)
         {
             var firstLength = first.Length;
@@ -190,14 +226,17 @@ namespace Cloudtoid.Interprocess
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public T Read<T>() where T : struct
             => TryRead(out T item) ? item : throw new ArgumentException("Too long to be in buffer.");
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Read<T>(Span<T> items) where T : struct
         {
             if (!TryRead(items)) throw new ArgumentException("Too long to be in buffer.");
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Read(Span<byte> bytes)
         {
             if (!TryRead(bytes)) throw new ArgumentException("Too long to be in buffer.");

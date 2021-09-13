@@ -48,19 +48,17 @@ namespace Cloudtoid.Interprocess.Benchmark
 
         // Expecting that there are NO managed heap allocations.
         [Benchmark(Description = "Enqueue messages", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public void Enqueue(int iterations) // this assumes the message has already been composed
+        public void Enqueue() // this assumes the message has already been composed
         {
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
                 publisher!.TryEnqueue(Message);
         }
 
         // Expecting that there are NO managed heap allocations.
         [Benchmark(Description = "Enqueue messages (zero-copy)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public void EnqueueZeroCopy(int iterations) // this also assumes the message was already composed
+        public void EnqueueZeroCopy() // this also assumes the message was already composed
         {
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
                 publisher!.TryEnqueueZeroCopy(
                     Message.Length,
                     (buffer, _) =>
@@ -78,21 +76,19 @@ namespace Cloudtoid.Interprocess.Benchmark
 
         // Expecting that there are NO managed heap allocations.
         [Benchmark(Description = "Enqueue messages (zero-copy, func pointers)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public unsafe void EnqueueZeroCopyFuncPointer(int iterations) // this also assumes the message was already composed
+        public unsafe void EnqueueZeroCopyFuncPointer() // this also assumes the message was already composed
         {
             static long Func(object? state, WrappedByteSpan buffer, CancellationToken ct)
                 => buffer.Length;
 
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
                 publisher!.TryEnqueueZeroCopy(Message.Length, &Func, (object?)null, default);
         }
 
         [Benchmark(Description = "Enqueue and dequeue messages (buffered allocating)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public void EnqueueDequeue_WithResultArrayAllocation(int iterations)
+        public void EnqueueDequeue_WithResultArrayAllocation()
         {
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
             {
                 publisher.TryEnqueue(Message);
                 subscriber.Dequeue(default);
@@ -101,10 +97,9 @@ namespace Cloudtoid.Interprocess.Benchmark
 
         // Expecting that there are NO managed heap allocations.
         [Benchmark(Description = "Enqueue and dequeue messages (buffer reuse)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public void EnqueueAndDequeue_WithPooledResultArray(int iterations)
+        public void EnqueueAndDequeue_WithPooledResultArray()
         {
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
             {
                 publisher.TryEnqueue(Message);
                 subscriber.Dequeue(MessageBuffer, default);
@@ -112,10 +107,9 @@ namespace Cloudtoid.Interprocess.Benchmark
         }
 
         [Benchmark(Description = "Enqueue and dequeue messages (zero-copy)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public void ZeroCopyEnqueueDequeue(int iterations)
+        public void ZeroCopyEnqueueDequeue()
         {
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
             {
                 publisher!.TryEnqueueZeroCopy(
                     Message.Length,
@@ -163,8 +157,7 @@ namespace Cloudtoid.Interprocess.Benchmark
         }
 
         [Benchmark(Description = "Enqueue and dequeue messages (zero-copy, func pointers)", OperationsPerInvoke = QueueOpIterations)]
-        [Arguments(QueueOpIterations)]
-        public unsafe void ZeroCopyEnqueueDequeueFuncPointers(int iterations)
+        public unsafe void ZeroCopyEnqueueDequeueFuncPointers()
         {
             static long EnqueueFunc(object? state, WrappedByteSpan buffer, CancellationToken cancellation)
             {
@@ -199,7 +192,7 @@ namespace Cloudtoid.Interprocess.Benchmark
                 return i == 128;
             }
 
-            for (var i = 0; i < iterations; ++i)
+            for (var i = 0; i < QueueOpIterations; ++i)
             {
                 publisher!.TryEnqueueZeroCopy(Message.Length, &EnqueueFunc, (object?)null, default);
                 subscriber.DequeueZeroCopy(&DequeueFunc, (object?)null, default);
