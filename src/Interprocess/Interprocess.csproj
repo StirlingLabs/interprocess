@@ -21,6 +21,7 @@
     <PackageTags>interprocess;interprocess-communication;ipc;shared-memory-communication;shared-memory-queue;shared-memory;memory-mapped-file;queue;cross-process-communication;cross-process</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TargetFrameworks>$(TargetFrameworks);netstandard2.1;netstandard2.0</TargetFrameworks>
+    <PackageOutputPath>../artifacts</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
