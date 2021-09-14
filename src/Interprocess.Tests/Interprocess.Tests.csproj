@@ -5,6 +5,11 @@
     <RootNamespace>Cloudtoid.Interprocess.Tests</RootNamespace>
     <AssemblyName>Cloudtoid.Interprocess.Tests</AssemblyName>
     <IsPackable>false</IsPackable>
+    <CollectCoverage>true</CollectCoverage>
+    <CoverletOutputFormat>cobertura</CoverletOutputFormat>
+    <CoverletOutput>../coverage</CoverletOutput>
+    <DeterministicReport>true</DeterministicReport>
+    <DeterministicSourcePaths>true</DeterministicSourcePaths>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,5 +28,8 @@
   <ItemGroup>
     <None Update="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-
+  <Target Name="GenerateHtmlCoverageReport" AfterTargets="GenerateCoverageResultAfterTest">
+    <!-- generate markdown coverage report and badges -->
+    <ReportGenerator ReportFiles="@(CoverletReport)" ReportTypes="MarkdownSummary;Badges" SourceDirectories="../Interprocess" TargetDirectory="../coverage" />
+  </Target>
 </Project>
